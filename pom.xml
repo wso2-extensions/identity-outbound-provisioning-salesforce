@@ -25,7 +25,7 @@
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>identity-outbound-provisioning-google</artifactId>
+    <artifactId>identity-outbound-provisioning-salesforce</artifactId>
     <packaging>pom</packaging>
     <name>WSO2 Carbon - Identity Provisioning Connector for Salesforce</name>
     <description>
