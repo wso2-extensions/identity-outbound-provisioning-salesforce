@@ -104,14 +104,15 @@
                             org.osgi.framework; version="${osgi.framework.imp.pkg.version.range}",
                             org.osgi.service.component; version="${osgi.service.component.imp.pkg.version.range}",
                             org.wso2.carbon.identity.provisioning;
-                            version="${carbon.identity.package.import.version.range}",
+                            version="${carbon.identity.framework.import.version.range}",
                             org.wso2.carbon.identity.application.common.model;
-                            version="${carbon.identity.package.import.version.range}",
+                            version="${carbon.identity.framework.import.version.range}",
                             org.wso2.carbon.registry.core.*; version="${carbon.kernel.registry.imp.pkg.version}",
                         </Import-Package>
                         <Export-Package>
                             !org.wso2.carbon.identity.provisioning.connector.salesforce.internal,
-                            org.wso2.carbon.identity.provisioning.connector.salesforce.*
+                            org.wso2.carbon.identity.provisioning.connector.salesforce.*;
+                            version="${identity.outbound.provisioning.salesforce.export.version}"
                         </Export-Package>
                     </instructions>
                 </configuration>
