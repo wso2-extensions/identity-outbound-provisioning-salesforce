@@ -258,6 +258,8 @@
         <carbon.identity.framework.import.version.range>[5.0.0, 6.0.0)</carbon.identity.framework.import.version.range>
         <identity.framework.version>5.2.0</identity.framework.version>
 
+        <identity.outbound.provisioning.salesforce.export.version>${project.version}</identity.outbound.provisioning.salesforce.export.version>
+
         <!-- Carbon kernel version -->
         <carbon.kernel.registry.imp.pkg.version>[1.0.1, 2.0.0)</carbon.kernel.registry.imp.pkg.version>
         <carbon.kernel.version>4.4.7</carbon.kernel.version>
