@@ -255,7 +255,7 @@
 
     <properties>
         <!--Carbon framework version-->
-        <carbon.identity.package.import.version.range>[5.0.0, 6.0.0)</carbon.identity.package.import.version.range>
+        <carbon.identity.framework.import.version.range>[5.0.0, 6.0.0)</carbon.identity.framework.import.version.range>
         <identity.framework.version>5.2.0</identity.framework.version>
 
         <!-- Carbon kernel version -->
