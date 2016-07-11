@@ -111,7 +111,8 @@
                         </Import-Package>
                         <Export-Package>
                             !org.wso2.carbon.identity.provisioning.connector.salesforce.internal,
-                            org.wso2.carbon.identity.provisioning.connector.salesforce.*
+                            org.wso2.carbon.identity.provisioning.connector.salesforce.*;
+                            version="${identity.outbound.provisioning.salesforce.export.version}"
                         </Export-Package>
                     </instructions>
                 </configuration>
