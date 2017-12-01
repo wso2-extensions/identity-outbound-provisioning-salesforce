@@ -77,6 +77,14 @@
             <groupId>org.json.wso2</groupId>
             <artifactId>json</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.wso2.orbit.org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents.wso2</groupId>
+            <artifactId>httpcore</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
@@ -100,7 +108,9 @@
                             org.json; version="${json.wso2.version.range}",
                             org.apache.commons.lang; version="${commons-lang.wso2.osgi.version.range}",
                             org.apache.commons.logging; version="${commons-logging.osgi.version.range}",
-                            org.apache.commons.httpclient.*; version="${commons-httpclient.wso2.osgi.version}",
+                            org.apache.http.*;version="${httpcomponents-httpclient.imp.pkg.version.range}",
+                            org.apache.http.client.*;version="${httpcomponents-httpclient.imp.pkg.version.range}",
+                            org.apache.http.impl.client.*;version="${httpcomponents-httpclient.imp.pkg.version.range}",
                             org.osgi.framework; version="${osgi.framework.imp.pkg.version.range}",
                             org.osgi.service.component; version="${osgi.service.component.imp.pkg.version.range}",
                             org.wso2.carbon.identity.provisioning;
