@@ -18,17 +18,22 @@
 
 package org.wso2.carbon.identity.provisioning.connector.salesforce;
 
-import org.apache.commons.httpclient.Header;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpMethodBase;
-import org.apache.commons.httpclient.HttpStatus;
-import org.apache.commons.httpclient.NameValuePair;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.methods.PostMethod;
-import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.http.Header;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -48,8 +53,12 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
@@ -62,17 +71,14 @@ public class SalesforceProvisioningConnector extends AbstractOutboundProvisionin
     private SalesforceProvisioningConnectorConfig configHolder;
 
     @Override
-    /**
-     *
-     */
     public void init(Property[] provisioningProperties) throws IdentityProvisioningException {
         Properties configs = new Properties();
 
         if (provisioningProperties != null && provisioningProperties.length > 0) {
             for (Property property : provisioningProperties) {
                 configs.put(property.getName(), property.getValue());
-                if (IdentityProvisioningConstants.JIT_PROVISIONING_ENABLED.equals(property
-                        .getName()) && "1".equals(property.getValue())) {
+                if (IdentityProvisioningConstants.JIT_PROVISIONING_ENABLED.equals(property.getName()) && "1"
+                        .equals(property.getValue())) {
                     jitProvisioningEnabled = true;
                 }
             }
@@ -82,11 +88,7 @@ public class SalesforceProvisioningConnector extends AbstractOutboundProvisionin
     }
 
     @Override
-    /**
-     *
-     */
-    public ProvisionedIdentifier provision(ProvisioningEntity provisioningEntity)
-            throws IdentityProvisioningException {
+    public ProvisionedIdentifier provision(ProvisioningEntity provisioningEntity) throws IdentityProvisioningException {
         String provisionedId = null;
 
         if (provisioningEntity != null) {
@@ -102,8 +104,7 @@ public class SalesforceProvisioningConnector extends AbstractOutboundProvisionin
                 } else if (provisioningEntity.getOperation() == ProvisioningOperation.POST) {
                     provisionedId = createUser(provisioningEntity);
                 } else if (provisioningEntity.getOperation() == ProvisioningOperation.PUT) {
-                    update(provisioningEntity.getIdentifier().getIdentifier(),
-                            buildJsonObject(provisioningEntity));
+                    update(provisioningEntity.getIdentifier().getIdentifier(), buildJsonObject(provisioningEntity));
                 } else {
                     log.warn("Unsupported provisioning opertaion.");
                 }
@@ -123,17 +124,18 @@ public class SalesforceProvisioningConnector extends AbstractOutboundProvisionin
      * @return
      * @throws IdentityProvisioningException
      */
-    private JSONObject buildJsonObject(ProvisioningEntity provisioningEntity)
-            throws IdentityProvisioningException {
+    private JSONObject buildJsonObject(ProvisioningEntity provisioningEntity) throws IdentityProvisioningException {
 
         boolean isDebugEnabled = log.isDebugEnabled();
 
-        String provisioningPattern = this.configHolder.getValue(SalesforceConnectorConstants.PropertyConfig.PROVISIONING_PATTERN_KEY);
+        String provisioningPattern = this.configHolder
+                .getValue(SalesforceConnectorConstants.PropertyConfig.PROVISIONING_PATTERN_KEY);
         if (StringUtils.isBlank(provisioningPattern)) {
             log.info("Provisioning pattern is not defined, hence using default provisioning pattern");
             provisioningPattern = SalesforceConnectorConstants.PropertyConfig.DEFAULT_PROVISIONING_PATTERN;
         }
-        String provisioningSeparator = this.configHolder.getValue(SalesforceConnectorConstants.PropertyConfig.PROVISIONING_SEPERATOR_KEY);
+        String provisioningSeparator = this.configHolder
+                .getValue(SalesforceConnectorConstants.PropertyConfig.PROVISIONING_SEPERATOR_KEY);
         if (StringUtils.isBlank(provisioningSeparator)) {
             log.info("Provisioning separator is not defined, hence using default provisioning separator");
             provisioningSeparator = SalesforceConnectorConstants.PropertyConfig.DEFAULT_PROVISIONING_SEPERATOR;
@@ -151,11 +153,12 @@ public class SalesforceProvisioningConnector extends AbstractOutboundProvisionin
              * UserPermissionsMarketingUser, UserPermissionsOfflineUser
              **/
 
-            Map<String, String> requiredAttributes = getSingleValuedClaims(provisioningEntity
-                    .getAttributes());
+            Map<String, String> requiredAttributes = getSingleValuedClaims(provisioningEntity.getAttributes());
 
-            String userIdClaimURL = this.configHolder.getValue(SalesforceConnectorConstants.PropertyConfig.USER_ID_CLAIM_URI_KEY);
-            String provisioningDomain = this.configHolder.getValue(SalesforceConnectorConstants.PropertyConfig.PROVISIONING_DOMAIN_KEY);
+            String userIdClaimURL = this.configHolder
+                    .getValue(SalesforceConnectorConstants.PropertyConfig.USER_ID_CLAIM_URI_KEY);
+            String provisioningDomain = this.configHolder
+                    .getValue(SalesforceConnectorConstants.PropertyConfig.PROVISIONING_DOMAIN_KEY);
             String userId = provisioningEntity.getEntityName();
 
             if (StringUtils.isNotBlank(requiredAttributes.get(userIdClaimURL))) {
@@ -165,8 +168,8 @@ public class SalesforceProvisioningConnector extends AbstractOutboundProvisionin
             String userIdFromPattern = null;
 
             if (provisioningPattern != null) {
-                userIdFromPattern = buildUserId(provisioningEntity, provisioningPattern,
-                        provisioningSeparator, idpName);
+                userIdFromPattern = buildUserId(provisioningEntity, provisioningPattern, provisioningSeparator,
+                        idpName);
             }
             if (StringUtils.isNotBlank(userIdFromPattern)) {
                 userId = userIdFromPattern;
@@ -193,8 +196,7 @@ public class SalesforceProvisioningConnector extends AbstractOutboundProvisionin
                     user.put(mapEntry.getKey(), mapEntry.getValue());
                 }
                 if (isDebugEnabled) {
-                    log.debug("The key is: " + mapEntry.getKey() + ",value is :"
-                            + mapEntry.getValue());
+                    log.debug("The key is: " + mapEntry.getKey() + " , value is: " + mapEntry.getValue());
                 }
             }
 
@@ -215,87 +217,80 @@ public class SalesforceProvisioningConnector extends AbstractOutboundProvisionin
      * @return
      * @throws IdentityProvisioningException
      */
-    private String createUser(ProvisioningEntity provisioningEntity)
-            throws IdentityProvisioningException {
+    private String createUser(ProvisioningEntity provisioningEntity) throws IdentityProvisioningException {
 
         boolean isDebugEnabled = log.isDebugEnabled();
 
-        HttpClient httpclient = new HttpClient();
-        JSONObject user = buildJsonObject(provisioningEntity);
-
-        PostMethod post = new PostMethod(this.getUserObjectEndpoint());
-        setAuthorizationHeader(post);
-
-        try {
-            post.setRequestEntity(new StringRequestEntity(user.toString(),
-                    SalesforceConnectorConstants.CONTENT_TYPE_APPLICATION_JSON, null));
-        } catch (UnsupportedEncodingException e) {
-            log.error("Error in encoding provisioning request");
-            throw new IdentityProvisioningException(e);
-        }
-
         String provisionedId = null;
+        try (CloseableHttpClient httpclient = HttpClientBuilder.create().useSystemProperties().build()) {
+            JSONObject user = buildJsonObject(provisioningEntity);
 
-        try {
+            HttpPost post = new HttpPost(this.getUserObjectEndpoint());
+            setAuthorizationHeader(post);
 
-            httpclient.executeMethod(post);
+            post.setEntity(new StringEntity(user.toString(),
+                    ContentType.create(SalesforceConnectorConstants.CONTENT_TYPE_APPLICATION_JSON)));
 
-            if (isDebugEnabled) {
-                log.debug("HTTP status " + post.getStatusCode() + " creating user");
-            }
+            try (CloseableHttpResponse response = httpclient.execute(post)) {
 
-            if (post.getStatusCode() == HttpStatus.SC_CREATED) {
-                JSONObject response = new JSONObject(new JSONTokener(new InputStreamReader(
-                        post.getResponseBodyAsStream())));
                 if (isDebugEnabled) {
-                    log.debug("Create response: " + response.toString(2));
+                    log.debug("HTTP status " + response.getStatusLine().getStatusCode() + " creating user");
                 }
 
-                if (response.getBoolean("success")) {
-                    provisionedId = response.getString("id");
+                if (response.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED) {
+                    JSONObject jsonResponse = new JSONObject(
+                            new JSONTokener(new InputStreamReader(response.getEntity().getContent())));
                     if (isDebugEnabled) {
-                        log.debug("New record id " + provisionedId);
+                        log.debug("Create response: " + jsonResponse.toString(2));
+                    }
+
+                    if (jsonResponse.getBoolean("success")) {
+                        provisionedId = jsonResponse.getString("id");
+                        if (isDebugEnabled) {
+                            log.debug("New record id " + provisionedId);
+                        }
+                    }
+                } else {
+                    log.error("Received response status code: " + response.getStatusLine().getStatusCode() + " text: "
+                            + response.getStatusLine().getReasonPhrase());
+                    if (isDebugEnabled) {
+                        log.debug("Error response : " + readResponse(post));
                     }
                 }
-            } else {
-                log.error("recieved response status code :" + post.getStatusCode()
-                        + " text : " + post.getStatusText());
-                if (isDebugEnabled) {
-                    log.debug("Error response : " + readResponse(post));
-                }
+            } catch (IOException | JSONException e) {
+                throw new IdentityProvisioningException("Error in invoking provisioning operation for the user", e);
+            } finally {
+                post.releaseConnection();
             }
-        } catch (IOException | JSONException e) {
-            throw new IdentityProvisioningException("Error in invoking provisioning operation for the user", e);
-        } finally {
-            post.releaseConnection();
-        }
 
-        if (isDebugEnabled) {
-            log.debug("Returning created user's ID : " + provisionedId);
+            if (isDebugEnabled) {
+                log.debug("Returning created user's ID: " + provisionedId);
+            }
+        } catch (IOException e) {
+            log.error("Error while closing HttpClient.");
         }
-
         return provisionedId;
     }
 
-    private String readResponse(PostMethod post) throws IOException {
-        InputStream is = post.getResponseBodyAsStream();
-        BufferedReader rd = new BufferedReader(new InputStreamReader(is));
-        String line;
-        StringBuilder response = new StringBuilder();
-        while ((line = rd.readLine()) != null) {
-            response.append(line);
-            response.append('\r');
+    private String readResponse(HttpPost post) throws IOException {
+        try (InputStream is = post.getEntity().getContent()) {
+            BufferedReader rd = new BufferedReader(new InputStreamReader(is));
+            String line;
+            StringBuilder response = new StringBuilder();
+            while ((line = rd.readLine()) != null) {
+                response.append(line);
+                response.append('\r');
+            }
+            rd.close();
+            return response.toString();
         }
-        rd.close();
-        return response.toString();
     }
 
     /**
      * @param provisioningEntity
      * @throws IdentityProvisioningException
      */
-    private void deleteUser(ProvisioningEntity provisioningEntity)
-            throws IdentityProvisioningException {
+    private void deleteUser(ProvisioningEntity provisioningEntity) throws IdentityProvisioningException {
 
         JSONObject entity = new JSONObject();
         try {
@@ -314,53 +309,48 @@ public class SalesforceProvisioningConnector extends AbstractOutboundProvisionin
      * @return
      * @throws IdentityProvisioningException
      */
-    private void update(String provsionedId, JSONObject entity)
-            throws IdentityProvisioningException {
+    private void update(String provsionedId, JSONObject entity) throws IdentityProvisioningException {
 
         boolean isDebugEnabled = log.isDebugEnabled();
 
-        try {
+        HttpPost patch = new HttpPost(this.getUserObjectEndpoint() + provsionedId) {
+            @Override
+            public String getMethod() {
+                return "PATCH";
+            }
+        };
 
-            PostMethod patch = new PostMethod(this.getUserObjectEndpoint() + provsionedId) {
-                @Override
-                public String getName() {
-                    return "PATCH";
-                }
-            };
+        setAuthorizationHeader(patch);
+        patch.setEntity(new StringEntity(entity.toString(),
+                ContentType.create(SalesforceConnectorConstants.CONTENT_TYPE_APPLICATION_JSON)));
 
-            setAuthorizationHeader(patch);
-            patch.setRequestEntity(new StringRequestEntity(entity.toString(), "application/json",
-                    null));
-
-            try {
-                HttpClient httpclient = new HttpClient();
-                httpclient.executeMethod(patch);
-                if (patch.getStatusCode() == HttpStatus.SC_OK
-                        || patch.getStatusCode() == HttpStatus.SC_NO_CONTENT) {
+        try (CloseableHttpClient httpclient = HttpClientBuilder.create().useSystemProperties().build()) {
+            try (CloseableHttpResponse response = httpclient.execute(patch)) {
+                if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK
+                        || response.getStatusLine().getStatusCode() == HttpStatus.SC_NO_CONTENT) {
                     if (isDebugEnabled) {
 
-                        log.debug("HTTP status " + patch.getStatusCode() + " updating user "
-                                + provsionedId + "\n\n");
+                        log.debug("HTTP status " + response.getStatusLine().getStatusCode() + " updating user " +
+                                provsionedId + "\n\n");
                     }
                 } else {
-                    log.error("recieved response status code :" + patch.getStatusCode()
-                            + " text : " + patch.getStatusText());
+                    log.error("Received response status code: " + response.getStatusLine().getStatusCode() + " text: "
+                            + response.getStatusLine().getStatusCode());
                     if (isDebugEnabled) {
-                        log.debug("Error response : " + readResponse(patch));
+                        log.debug("Error response: " + readResponse(patch));
                     }
                 }
-
             } catch (IOException e) {
                 log.error("Error in invoking provisioning request");
                 throw new IdentityProvisioningException(e);
-            } finally {
-                patch.releaseConnection();
             }
 
-        } catch (UnsupportedEncodingException e) {
-            log.error("Error in encoding provisioning request");
-            throw new IdentityProvisioningException(e);
+        } catch (IOException e) {
+            log.error("Error while closing HttpClient.");
+        } finally {
+            patch.releaseConnection();
         }
+
     }
 
     /**
@@ -368,21 +358,19 @@ public class SalesforceProvisioningConnector extends AbstractOutboundProvisionin
      *
      * @param httpMethod method which wants to add Authorization header
      */
-    private void setAuthorizationHeader(HttpMethodBase httpMethod)
-            throws IdentityProvisioningException {
+    private void setAuthorizationHeader(HttpRequestBase httpMethod) throws IdentityProvisioningException {
 
         boolean isDebugEnabled = log.isDebugEnabled();
 
         String accessToken = authenticate();
         if (StringUtils.isNotBlank(accessToken)) {
-            httpMethod.setRequestHeader(SalesforceConnectorConstants.AUTHORIZATION_HEADER_NAME,
+            httpMethod.addHeader(SalesforceConnectorConstants.AUTHORIZATION_HEADER_NAME,
                     SalesforceConnectorConstants.AUTHORIZATION_HEADER_OAUTH + " " + accessToken);
 
             if (isDebugEnabled) {
-                log.debug("Setting authorization header for method : " + httpMethod.getName()
-                        + " as follows,");
+                log.debug("Setting authorization header for method: " + httpMethod.getMethod() + " as follows,");
                 Header authorizationHeader = httpMethod
-                        .getRequestHeader(SalesforceConnectorConstants.AUTHORIZATION_HEADER_NAME);
+                        .getLastHeader(SalesforceConnectorConstants.AUTHORIZATION_HEADER_NAME);
                 log.debug(authorizationHeader.getName() + ": " + authorizationHeader.getValue());
             }
         } else {
@@ -398,60 +386,66 @@ public class SalesforceProvisioningConnector extends AbstractOutboundProvisionin
 
         boolean isDebugEnabled = log.isDebugEnabled();
 
-        HttpClient httpclient = new HttpClient();
+        try (CloseableHttpClient httpclient = HttpClientBuilder.create().useSystemProperties().build()) {
 
-        String url = configHolder.getValue(SalesforceConnectorConstants.PropertyConfig.OAUTH2_TOKEN_ENDPOINT);
+            String url = configHolder.getValue(SalesforceConnectorConstants.PropertyConfig.OAUTH2_TOKEN_ENDPOINT);
 
-        PostMethod post = new PostMethod(StringUtils.isNotBlank(url) ?
-                url : IdentityApplicationConstants.SF_OAUTH2_TOKEN_ENDPOINT);
+            HttpPost post = new HttpPost(
+                    StringUtils.isNotBlank(url) ? url : IdentityApplicationConstants.SF_OAUTH2_TOKEN_ENDPOINT);
 
-        post.addParameter(SalesforceConnectorConstants.CLIENT_ID,
-                configHolder.getValue(SalesforceConnectorConstants.PropertyConfig.CLIENT_ID));
-        post.addParameter(SalesforceConnectorConstants.CLIENT_SECRET,
-                configHolder.getValue(SalesforceConnectorConstants.PropertyConfig.CLIENT_SECRET));
-        post.addParameter(SalesforceConnectorConstants.PASSWORD,
-                configHolder.getValue(SalesforceConnectorConstants.PropertyConfig.PASSWORD));
-        post.addParameter(SalesforceConnectorConstants.GRANT_TYPE,
-                SalesforceConnectorConstants.GRANT_TYPE_PASSWORD);
-        post.addParameter(SalesforceConnectorConstants.USERNAME,
-                configHolder.getValue(SalesforceConnectorConstants.PropertyConfig.USERNAME));
+            List<BasicNameValuePair> params = new ArrayList<>();
 
-        StringBuilder sb = new StringBuilder();
-        try {
-            // send the request
-            int responseStatus = httpclient.executeMethod(post);
-            if (isDebugEnabled) {
-                log.debug("Authentication to salesforce returned with response code: "
-                        + responseStatus);
-            }
+            params.add(new BasicNameValuePair(SalesforceConnectorConstants.CLIENT_ID,
+                    configHolder.getValue(SalesforceConnectorConstants.PropertyConfig.CLIENT_ID)));
+            params.add(new BasicNameValuePair(SalesforceConnectorConstants.CLIENT_SECRET,
+                    configHolder.getValue(SalesforceConnectorConstants.PropertyConfig.CLIENT_SECRET)));
+            params.add(new BasicNameValuePair(SalesforceConnectorConstants.PASSWORD,
+                    configHolder.getValue(SalesforceConnectorConstants.PropertyConfig.PASSWORD)));
+            params.add(new BasicNameValuePair(SalesforceConnectorConstants.GRANT_TYPE,
+                    SalesforceConnectorConstants.GRANT_TYPE_PASSWORD));
+            params.add(new BasicNameValuePair(SalesforceConnectorConstants.USERNAME,
+                    configHolder.getValue(SalesforceConnectorConstants.PropertyConfig.USERNAME)));
 
-            sb.append("HTTP status " + post.getStatusCode() + " creating user\n\n");
+            post.setEntity(new UrlEncodedFormEntity(params, StandardCharsets.UTF_8));
 
-            if (post.getStatusCode() == HttpStatus.SC_OK) {
-                JSONObject response = new JSONObject(new JSONTokener(new InputStreamReader(
-                        post.getResponseBodyAsStream())));
+            StringBuilder sb = new StringBuilder();
+            try (CloseableHttpResponse response = httpclient.execute(post)) {
+                // send the request
+
                 if (isDebugEnabled) {
-                    log.debug("Authenticate response: " + response.toString(2));
+                    log.debug("Authentication to salesforce returned with response code: " + response.getStatusLine()
+                            .getStatusCode());
                 }
 
-                Object attributeValObj = response.opt("access_token");
-                if (attributeValObj instanceof String) {
+                sb.append("HTTP status " + response.getStatusLine().getStatusCode() + " creating user\n\n");
+
+                if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                    JSONObject jsonResponse = new JSONObject(
+                            new JSONTokener(new InputStreamReader(response.getEntity().getContent())));
                     if (isDebugEnabled) {
-                        log.debug("Access token is : " + (String) attributeValObj);
+                        log.debug("Authenticate response: " + jsonResponse.toString(2));
                     }
-                    return (String) attributeValObj;
+
+                    Object attributeValObj = jsonResponse.opt("access_token");
+                    if (attributeValObj instanceof String) {
+                        if (isDebugEnabled) {
+                            log.debug("Access token is: " + (String) attributeValObj);
+                        }
+                        return (String) attributeValObj;
+                    } else {
+                        log.error("Authentication response type: " + attributeValObj.toString() + " is invalide");
+                    }
                 } else {
-                    log.error("Authentication response type : " + attributeValObj.toString()
-                            + " is invalide");
+                    log.error("Received response status code: " + response.getStatusLine().getStatusCode() + " text: "
+                            + response.getStatusLine().getReasonPhrase());
                 }
-            } else {
-                log.error("recieved response status code :" + post.getStatusCode() + " text : "
-                        + post.getStatusText());
+            } catch (JSONException | IOException e) {
+                throw new IdentityProvisioningException("Error in decoding response to JSON", e);
+            } finally {
+                post.releaseConnection();
             }
-        } catch (JSONException | IOException e) {
-            throw new IdentityProvisioningException("Error in decoding response to JSON", e);
-        } finally {
-            post.releaseConnection();
+        } catch (IOException e) {
+            log.error("Error while closing HttpClient.");
         }
 
         return "";
@@ -467,8 +461,8 @@ public class SalesforceProvisioningConnector extends AbstractOutboundProvisionin
         boolean isDebugEnabled = log.isDebugEnabled();
 
         String url = configHolder.getValue(SalesforceConnectorConstants.PropertyConfig.DOMAIN_NAME)
-                + SalesforceConnectorConstants.CONTEXT_SERVICES_DATA
-                + configHolder.getValue(SalesforceConnectorConstants.PropertyConfig.API_VERSION)
+                + SalesforceConnectorConstants.CONTEXT_SERVICES_DATA + configHolder
+                .getValue(SalesforceConnectorConstants.PropertyConfig.API_VERSION)
                 + SalesforceConnectorConstants.CONTEXT_SOOBJECTS_USER;
         if (isDebugEnabled) {
             log.debug("Built user endpoint url : " + url);
@@ -489,11 +483,11 @@ public class SalesforceProvisioningConnector extends AbstractOutboundProvisionin
         boolean isDebugEnabled = log.isDebugEnabled();
 
         String url = configHolder.getValue(SalesforceConnectorConstants.PropertyConfig.DOMAIN_NAME)
-                + SalesforceConnectorConstants.CONTEXT_SERVICES_DATA
-                + configHolder.getValue(SalesforceConnectorConstants.PropertyConfig.API_VERSION)
+                + SalesforceConnectorConstants.CONTEXT_SERVICES_DATA + configHolder
+                .getValue(SalesforceConnectorConstants.PropertyConfig.API_VERSION)
                 + SalesforceConnectorConstants.CONTEXT_QUERY;
         if (isDebugEnabled) {
-            log.debug("Built query endpoint url : " + url);
+            log.debug("Built query endpoint url: " + url);
         }
 
         return url;
@@ -514,57 +508,60 @@ public class SalesforceProvisioningConnector extends AbstractOutboundProvisionin
             query = SalesforceConnectorDBQueries.SALESFORCE_LIST_USER_SIMPLE_QUERY;
         }
 
-        HttpClient httpclient = new HttpClient();
-        GetMethod get = new GetMethod(this.getDataQueryEndpoint());
-        setAuthorizationHeader(get);
-
-        // set the SOQL as a query param
-        NameValuePair[] params = new NameValuePair[1];
-        params[0] = new NameValuePair("q", query);
-        get.setQueryString(params);
-
         StringBuilder sb = new StringBuilder();
-        try {
-            httpclient.executeMethod(get);
-            if (get.getStatusCode() == HttpStatus.SC_OK) {
+        try (CloseableHttpClient httpclient = HttpClientBuilder.create().useSystemProperties().build()) {
+            HttpGet get = new HttpGet(this.getDataQueryEndpoint());
+            setAuthorizationHeader(get);
 
-                JSONObject response = new JSONObject(new JSONTokener(new InputStreamReader(
-                        get.getResponseBodyAsStream())));
-                if (isDebugEnabled) {
-                    log.debug("Query response: " + response.toString(2));
-                }
-
-                // Build the returning string
-                sb.append(response.getString("totalSize") + " record(s) returned\n\n");
-                JSONArray results = response.getJSONArray("records");
-                for (int i = 0; i < results.length(); i++) {
-                    sb.append(results.getJSONObject(i).getString("Id") + ", "
-
-                            + results.getJSONObject(i).getString("Alias") + ", "
-                            + results.getJSONObject(i).getString("Email") + ", "
-                            + results.getJSONObject(i).getString("LastName") + ", "
-                            + results.getJSONObject(i).getString("Name") + ", "
-                            + results.getJSONObject(i).getString("ProfileId") + ", "
-                            + results.getJSONObject(i).getString("Username") + "\n");
-                }
-                sb.append("\n");
-            } else {
-                log.error("recieved response status code:" + get.getStatusCode() + " text : "
-                        + get.getStatusText());
+            try {
+                // set the SOQL as a query param
+                URI uri = new URIBuilder(get.getURI()).addParameter("q", query).build();
+                get.setURI(uri);
+            } catch (URISyntaxException e) {
+                throw new IdentityProvisioningException("Error in Building the URI", e);
             }
-        } catch (JSONException | IOException e) {
-            log.error("Error in invoking provisioning operation for the user listing");
-            throw new IdentityProvisioningException(e);
-        }finally {
-            get.releaseConnection();
-        }
 
-        if (isDebugEnabled) {
-            log.debug("Returning string : " + sb.toString());
-        }
+            try (CloseableHttpResponse response = httpclient.execute(get)) {
+                if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
 
-        if (log.isTraceEnabled()) {
-            log.trace("Ending listUsers() of " + SalesforceProvisioningConnector.class);
+                    JSONObject jsonResponse = new JSONObject(
+                            new JSONTokener(new InputStreamReader(response.getEntity().getContent())));
+                    if (isDebugEnabled) {
+                        log.debug("Query response: " + jsonResponse.toString(2));
+                    }
+
+                    // Build the returning string
+                    sb.append(jsonResponse.getString("totalSize") + " record(s) returned\n\n");
+                    JSONArray results = jsonResponse.getJSONArray("records");
+                    for (int i = 0; i < results.length(); i++) {
+                        sb.append(results.getJSONObject(i).getString("Id") + ", " + results.getJSONObject(i)
+                                .getString("Alias") + ", " + results.getJSONObject(i).getString("Email") + ", " +
+                                results.getJSONObject(i).getString("LastName") + ", " +
+                                results.getJSONObject(i).getString("Name") + ", " + results.getJSONObject(i)
+                                .getString("ProfileId") + ", " + results.getJSONObject(i).getString("Username") +
+                                "\n");
+                    }
+                    sb.append("\n");
+                } else {
+                    log.error("Received response status code: " + response.getStatusLine().getStatusCode() + " text: "
+                            + response.getStatusLine().getReasonPhrase());
+                }
+            } catch (JSONException | IOException e) {
+                log.error("Error in invoking provisioning operation for the user listing");
+                throw new IdentityProvisioningException(e);
+            } finally {
+                get.releaseConnection();
+            }
+
+            if (isDebugEnabled) {
+                log.debug("Returning string: " + sb.toString());
+            }
+
+            if (log.isTraceEnabled()) {
+                log.trace("Ending listUsers() of " + SalesforceProvisioningConnector.class);
+            }
+        } catch (IOException e) {
+            log.error("Error while closing HttpClient.");
         }
         return sb.toString();
     }
@@ -582,12 +579,13 @@ public class SalesforceProvisioningConnector extends AbstractOutboundProvisionin
         if (StringUtils.isBlank(provisioningEntity.getEntityName())) {
             throw new IdentityProvisioningException("Could Not Find Entity Name from Provisioning Entity");
         }
-        String alteredUsername = SalesforceConnectorConstants.SALESFORCE_OLD_USERNAME_PREFIX +
-                                    UUIDGenerator.generateUUID() + provisioningEntity.getEntityName();
+        String alteredUsername =
+                SalesforceConnectorConstants.SALESFORCE_OLD_USERNAME_PREFIX + UUIDGenerator.generateUUID()
+                        + provisioningEntity.getEntityName();
 
         if (log.isDebugEnabled()) {
-            log.debug("Alter username: " + provisioningEntity.getEntityName() + " to: " + alteredUsername +
-                      "while deleting user");
+            log.debug("Alter username: " + provisioningEntity.getEntityName() + " to: " + alteredUsername
+                    + "while deleting user");
         }
         return alteredUsername;
     }
