@@ -88,6 +88,7 @@ public class SalesforceProvisioningConnectorFactory extends AbstractProvisioning
         clientSecret.setRequired(true);
         clientSecret.setType("string");
         clientSecret.setDisplayOrder(4);
+        clientSecret.setConfidential(true);
         configProperties.add(clientSecret);
 
         Property username = new Property();
