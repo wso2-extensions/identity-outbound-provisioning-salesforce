@@ -103,7 +103,7 @@ public class SalesforceProvisioningConnectorFactory extends AbstractProvisioning
         password.setName(SalesforceConnectorConstants.PropertyConfig.PASSWORD);
         password.setDisplayName("Password");
         password.setRequired(true);
-        password.setDescription("Enable User password provisioning to a SCIM domain");
+        password.setDescription("Enable User password provisioning to a Salesforce domain");
         password.setType("boolean");
         password.setDefaultValue("true");
         password.setDisplayOrder(6);
