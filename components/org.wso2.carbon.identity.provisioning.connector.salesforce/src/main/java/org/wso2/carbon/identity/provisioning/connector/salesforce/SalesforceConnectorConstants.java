@@ -54,6 +54,11 @@ public class SalesforceConnectorConstants {
     public static final String SALESFORCE_ENDPOINT_QUERY = "/query";
     public static final String SALESFORCE_OLD_USERNAME_PREFIX = "old";
 
+    // Constants related to hostname verification
+    public static final String DEFAULT_AND_LOCALHOST = "DefaultAndLocalhost";
+    public static final String ALLOW_ALL = "AllowAll";
+    public static final String HOST_NAME_VERIFIER = "httpclient.hostnameVerifier";
+
     public class PropertyConfig {
 
         public static final String IDP_NAME = "Identity.Provisioning.Connector.Salesforce.IdP.Name";
@@ -73,6 +78,7 @@ public class SalesforceConnectorConstants {
         public static final String GRANT_TYPE = "grant_type";
         public static final String USERNAME = "sf-username";
         public static final String PASSWORD = "sf-password";
+        public static final String USE_PASSWORD_GRANT = "sf-usePasswordGrant";
         public static final String OAUTH2_TOKEN_ENDPOINT = "sf-token-endpoint";
 
         public static final String PROVISIONING_PATTERN_KEY = "sf-prov-pattern";
