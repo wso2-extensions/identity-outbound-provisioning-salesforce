@@ -54,11 +54,6 @@ public class SalesforceConnectorConstants {
     public static final String SALESFORCE_ENDPOINT_QUERY = "/query";
     public static final String SALESFORCE_OLD_USERNAME_PREFIX = "old";
 
-    // Constants related to hostname verification
-    public static final String DEFAULT_AND_LOCALHOST = "DefaultAndLocalhost";
-    public static final String ALLOW_ALL = "AllowAll";
-    public static final String HOST_NAME_VERIFIER = "httpclient.hostnameVerifier";
-
     public class PropertyConfig {
 
         public static final String IDP_NAME = "Identity.Provisioning.Connector.Salesforce.IdP.Name";
