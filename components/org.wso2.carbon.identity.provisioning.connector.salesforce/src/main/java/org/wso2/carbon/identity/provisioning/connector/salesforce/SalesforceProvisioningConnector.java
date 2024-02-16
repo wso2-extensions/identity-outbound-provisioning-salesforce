@@ -399,12 +399,8 @@ public class SalesforceProvisioningConnector extends AbstractOutboundProvisionin
                     configHolder.getValue(SalesforceConnectorConstants.PropertyConfig.CLIENT_ID)));
             params.add(new BasicNameValuePair(SalesforceConnectorConstants.CLIENT_SECRET,
                     configHolder.getValue(SalesforceConnectorConstants.PropertyConfig.CLIENT_SECRET)));
-            params.add(new BasicNameValuePair(SalesforceConnectorConstants.PASSWORD,
-                    configHolder.getValue(SalesforceConnectorConstants.PropertyConfig.PASSWORD)));
             params.add(new BasicNameValuePair(SalesforceConnectorConstants.GRANT_TYPE,
-                    SalesforceConnectorConstants.GRANT_TYPE_PASSWORD));
-            params.add(new BasicNameValuePair(SalesforceConnectorConstants.USERNAME,
-                    configHolder.getValue(SalesforceConnectorConstants.PropertyConfig.USERNAME)));
+                    SalesforceConnectorConstants.GRANT_TYPE_CLIENT_CREDENTIAL));
 
             post.setEntity(new UrlEncodedFormEntity(params, StandardCharsets.UTF_8));
 

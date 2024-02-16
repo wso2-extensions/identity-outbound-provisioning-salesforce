@@ -30,6 +30,7 @@ public class SalesforceConnectorConstants {
     public static final String CLIENT_SECRET = "client_secret";
     public static final String GRANT_TYPE = "grant_type";
     public static final String GRANT_TYPE_PASSWORD = "password";
+    public static final String GRANT_TYPE_CLIENT_CREDENTIAL = "client_credentials";
     public static final String USERNAME = "username";
     public static final String USERNAME_ATTRIBUTE = "Username";
     public static final String PASSWORD = "password";
