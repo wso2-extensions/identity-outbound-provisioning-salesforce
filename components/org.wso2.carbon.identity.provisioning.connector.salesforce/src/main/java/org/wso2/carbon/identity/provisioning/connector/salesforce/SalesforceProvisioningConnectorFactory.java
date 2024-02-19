@@ -91,12 +91,20 @@ public class SalesforceProvisioningConnectorFactory extends AbstractProvisioning
         clientSecret.setConfidential(true);
         configProperties.add(clientSecret);
 
+        Property grantType = new Property();
+        grantType.setName(SalesforceConnectorConstants.PropertyConfig.USE_PASSWORD_GRANT);
+        grantType.setDisplayName("Use OAuth Username-Password Flow to get access token");
+        grantType.setType("boolean");
+        grantType.setDefaultValue("true");
+        grantType.setDisplayOrder(5);
+        configProperties.add(grantType);
+
         Property username = new Property();
         username.setName(SalesforceConnectorConstants.PropertyConfig.USERNAME);
         username.setDisplayName("Username");
         username.setRequired(false);
         username.setType("string");
-        username.setDisplayOrder(5);
+        username.setDisplayOrder(6);
         configProperties.add(username);
 
         Property password = new Property();
@@ -104,17 +112,9 @@ public class SalesforceProvisioningConnectorFactory extends AbstractProvisioning
         password.setDisplayName("Password");
         password.setRequired(false);
         password.setType("string");
-        password.setDisplayOrder(6);
+        password.setDisplayOrder(7);
         password.setConfidential(true);
         configProperties.add(password);
-
-        Property grantType = new Property();
-        grantType.setName(SalesforceConnectorConstants.PropertyConfig.USE_PASSWORD_GRANT);
-        grantType.setDisplayName("Use Username-Password grant to get access token");
-        grantType.setType("boolean");
-        grantType.setDefaultValue("true");
-        grantType.setDisplayOrder(7);
-        configProperties.add(grantType);
 
         Property tokenEp = new Property();
         tokenEp.setName(SalesforceConnectorConstants.PropertyConfig.OAUTH2_TOKEN_ENDPOINT);
