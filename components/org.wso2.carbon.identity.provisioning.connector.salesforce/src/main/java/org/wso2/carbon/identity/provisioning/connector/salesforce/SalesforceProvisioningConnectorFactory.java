@@ -91,22 +91,29 @@ public class SalesforceProvisioningConnectorFactory extends AbstractProvisioning
         clientSecret.setConfidential(true);
         configProperties.add(clientSecret);
 
+        Property grantType = new Property();
+        grantType.setName(SalesforceConnectorConstants.PropertyConfig.USE_PASSWORD_GRANT);
+        grantType.setDisplayName("Use OAuth Username-Password Flow to get access token");
+        grantType.setType("boolean");
+        grantType.setDefaultValue("true");
+        grantType.setDisplayOrder(5);
+        configProperties.add(grantType);
+
         Property username = new Property();
         username.setName(SalesforceConnectorConstants.PropertyConfig.USERNAME);
         username.setDisplayName("Username");
-        username.setRequired(true);
+        username.setRequired(false);
         username.setType("string");
-        username.setDisplayOrder(5);
+        username.setDisplayOrder(6);
         configProperties.add(username);
 
         Property password = new Property();
         password.setName(SalesforceConnectorConstants.PropertyConfig.PASSWORD);
         password.setDisplayName("Password");
-        password.setRequired(true);
-        password.setDescription("Enable User password provisioning to a Salesforce domain");
-        password.setType("boolean");
-        password.setDefaultValue("true");
-        password.setDisplayOrder(6);
+        password.setRequired(false);
+        password.setType("string");
+        password.setDisplayOrder(7);
+        password.setConfidential(true);
         configProperties.add(password);
 
         Property tokenEp = new Property();
@@ -115,7 +122,7 @@ public class SalesforceProvisioningConnectorFactory extends AbstractProvisioning
         tokenEp.setRequired(true);
         tokenEp.setType("string");
         tokenEp.setDefaultValue("https://login.salesforce.com/services/oauth2/token");
-        tokenEp.setDisplayOrder(7);
+        tokenEp.setDisplayOrder(8);
         configProperties.add(tokenEp);
 
         Property provPattern = new Property();
@@ -126,7 +133,7 @@ public class SalesforceProvisioningConnectorFactory extends AbstractProvisioning
                 "attributes UD (User Domain), UN (Username), TD (Tenant Domain) and IDP (Identity Provider) can be " +
                 "used to construct a valid pattern. Ex: {UD, UN, TD, IDP}");
         provPattern.setType("string");
-        provPattern.setDisplayOrder(8);
+        provPattern.setDisplayOrder(9);
         configProperties.add(provPattern);
 
         Property provSeperator = new Property();
@@ -138,7 +145,7 @@ public class SalesforceProvisioningConnectorFactory extends AbstractProvisioning
                 "Separator:_, Google Domain : testmail.com then the privisioining email is testUser_testTenant" +
                 ".com@testmail.com");
         provSeperator.setType("string");
-        provSeperator.setDisplayOrder(9);
+        provSeperator.setDisplayOrder(10);
         configProperties.add(provSeperator);
 
         Property provDomain = new Property();
@@ -146,7 +153,7 @@ public class SalesforceProvisioningConnectorFactory extends AbstractProvisioning
         provDomain.setDisplayName("Provisioning Domain");
         provDomain.setRequired(false);
         provDomain.setType("string");
-        provDomain.setDisplayOrder(10);
+        provDomain.setDisplayOrder(11);
         configProperties.add(provDomain);
 
         return configProperties;
