@@ -1,3 +1,4 @@
+<?xml version='1.0' encoding='utf-8'?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <parent>
@@ -113,32 +114,13 @@
                             <goal>jar</goal>
                         </goals>
                         <configuration>
-                            
+                            <!--This parameter disables doclint-->
                             <doclint>none</doclint>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
-        <plugin>
-    <groupId>org.jacoco</groupId>
-    <artifactId>jacoco-maven-plugin</artifactId>
-    <version>${jacoco.version}</version>
-    <executions>
-        <execution>
-            <goals>
-                <goal>prepare-agent</goal>
-            </goals>
-        </execution>
-        <execution>
-            <id>report</id>
-            <phase>test</phase>
-            <goals>
-                <goal>report</goal>
-            </goals>
-        </execution>
-    </executions>
-</plugin>
-</plugins>
+        </plugins>
     </build>
 
     <dependencyManagement>
@@ -212,22 +194,22 @@
     </dependencyManagement>
 
     <properties>
-        
+        <!--Carbon framework version-->
         <carbon.identity.framework.import.version.range>[5.0.0, 8.0.0)</carbon.identity.framework.import.version.range>
         <carbon.identity.framework.version>5.5.0</carbon.identity.framework.version>
 
         <identity.outbound.provisioning.salesforce.export.version>${project.version}</identity.outbound.provisioning.salesforce.export.version>
 
-        
+        <!-- Carbon kernel version -->
         <carbon.kernel.version>4.4.7</carbon.kernel.version>
 
         <osgi.framework.imp.pkg.version.range>[1.7.0, 2.0.0)</osgi.framework.imp.pkg.version.range>
         <osgi.service.component.imp.pkg.version.range>[1.2.0, 2.0.0)</osgi.service.component.imp.pkg.version.range>
 
-        
+        <!--Carbon analytics common version-->
         <carbon.analytics-common.version>5.0.6</carbon.analytics-common.version>
 
-        
+        <!-- Commons -->
         <commons-lang.wso2.osgi.version.range>[2.6.0,3.0.0)</commons-lang.wso2.osgi.version.range>
         <commons-logging.osgi.version.range>[1.2,2.0)</commons-logging.osgi.version.range>
         <commons-httpclient.wso2.osgi.version>[3.1.0,4.0.0)</commons-httpclient.wso2.osgi.version>
@@ -237,10 +219,10 @@
         <httpcore.version>4.3.3.wso2v1</httpcore.version>
         <httpcore.osgi.version.range>[4.3.3, 5.0.0)</httpcore.osgi.version.range>
 
-        
+        <!-- Axis2 Version -->
         <axis2.wso2.version>1.6.1.wso2v12</axis2.wso2.version>
 
-        
+        <!-- Axiom Version -->
         <axiom.wso2.version>1.2.11.wso2v10</axiom.wso2.version>
 
         <maven.buildnumber.plugin.version>1.4</maven.buildnumber.plugin.version>
@@ -258,9 +240,31 @@
         <module>features/org.wso2.carbon.identity.provisioning.connector.salesforce.server.feature</module>
     </modules>
 
-<dependencies><dependency>
+<build><plugins><plugin>
+    <groupId>org.jacoco</groupId>
+    <artifactId>jacoco-maven-plugin</artifactId>
+    <version>${jacoco.version}</version>
+    <executions>
+        <execution>
+            <goals>
+                <goal>prepare-agent</goal>
+            </goals>
+        </execution>
+        <execution>
+            <id>report</id>
+            <phase>test</phase>
+            <goals>
+                <goal>report</goal>
+            </goals>
+        </execution>
+    </executions>
+</plugin>
+</plugins></build><dependencies><dependency>
     <groupId>org.jacoco</groupId>
     <artifactId>jacoco-maven-plugin</artifactId>
     <version>${jacoco.version}</version>
 </dependency>
-</dependencies></project>
+</dependencies><properties>
+    <jacoco.version>0.8.4</jacoco.version>
+</properties>
+</project>
