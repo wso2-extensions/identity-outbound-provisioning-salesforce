@@ -1,3 +1,4 @@
+<?xml version='1.0' encoding='utf-8'?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <parent>
@@ -67,12 +68,7 @@
             <groupId>org.apache.httpcomponents.wso2</groupId>
             <artifactId>httpcore</artifactId>
         </dependency>
-    <dependency>
-    <groupId>org.jacoco</groupId>
-    <artifactId>jacoco-maven-plugin</artifactId>
-    <version>${jacoco.version}</version>
-</dependency>
-</dependencies>
+    </dependencies>
 
     <build>
         <plugins>
@@ -113,7 +109,10 @@
                     </instructions>
                 </configuration>
             </plugin>
-        <plugin>
+        </plugins>
+    </build>
+
+<build><plugins><plugin>
     <groupId>org.jacoco</groupId>
     <artifactId>jacoco-maven-plugin</artifactId>
     <version>${jacoco.version}</version>
@@ -132,7 +131,12 @@
         </execution>
     </executions>
 </plugin>
-</plugins>
-    </build>
-
+</plugins></build><dependencies><dependency>
+    <groupId>org.jacoco</groupId>
+    <artifactId>jacoco-maven-plugin</artifactId>
+    <version>${jacoco.version}</version>
+</dependency>
+</dependencies><properties>
+    <jacoco.version>0.8.4</jacoco.version>
+</properties>
 </project>
