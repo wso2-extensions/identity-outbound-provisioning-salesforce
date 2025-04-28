@@ -254,7 +254,7 @@ public class SalesforceProvisioningConnector extends AbstractOutboundProvisionin
                     log.error("Received response status code: " + response.getStatusLine().getStatusCode() + " text: "
                             + response.getStatusLine().getReasonPhrase());
                     if (isDebugEnabled) {
-                        log.debug("Error response : " + readResponse(post));
+                        log.debug("Error response : " + readResponse(response));
                     }
                 }
             } catch (IOException | JSONException e) {
@@ -272,8 +272,8 @@ public class SalesforceProvisioningConnector extends AbstractOutboundProvisionin
         return provisionedId;
     }
 
-    private String readResponse(HttpPost post) throws IOException {
-        try (InputStream is = post.getEntity().getContent()) {
+    private String readResponse(CloseableHttpResponse responsePayload) throws IOException {
+        try (InputStream is = responsePayload.getEntity().getContent()) {
             BufferedReader rd = new BufferedReader(new InputStreamReader(is));
             String line;
             StringBuilder response = new StringBuilder();
@@ -337,7 +337,7 @@ public class SalesforceProvisioningConnector extends AbstractOutboundProvisionin
                     log.error("Received response status code: " + response.getStatusLine().getStatusCode() + " text: "
                             + response.getStatusLine().getStatusCode());
                     if (isDebugEnabled) {
-                        log.debug("Error response: " + readResponse(patch));
+                        log.debug("Error response: " + readResponse(response));
                     }
                 }
             } catch (IOException e) {
@@ -442,8 +442,11 @@ public class SalesforceProvisioningConnector extends AbstractOutboundProvisionin
                         log.error("Authentication response type: " + attributeValObj.toString() + " is invalide");
                     }
                 } else {
-                    log.error("Received response status code: " + response.getStatusLine().getStatusCode() + " text: "
+                    log.error("Received response status code during salesforce authentication: " + response.getStatusLine().getStatusCode() + " text: "
                             + response.getStatusLine().getReasonPhrase());
+                    if (isDebugEnabled) {
+                        log.debug("Error response during salesforce authentication: " + readResponse(response));
+                    }
                 }
             } catch (JSONException | IOException e) {
                 throw new IdentityProvisioningException("Error in decoding response to JSON", e);
@@ -551,6 +554,9 @@ public class SalesforceProvisioningConnector extends AbstractOutboundProvisionin
                 } else {
                     log.error("Received response status code: " + response.getStatusLine().getStatusCode() + " text: "
                             + response.getStatusLine().getReasonPhrase());
+                    if (isDebugEnabled) {
+                        log.debug("Error response : " + readResponse(response));
+                    }
                 }
             } catch (JSONException | IOException e) {
                 log.error("Error in invoking provisioning operation for the user listing");
