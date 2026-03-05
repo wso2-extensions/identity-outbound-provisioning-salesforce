@@ -20,19 +20,21 @@ package org.wso2.carbon.identity.provisioning.connector.salesforce.internal;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.ComponentContext;
 import org.wso2.carbon.identity.provisioning.AbstractProvisioningConnectorFactory;
 import org.wso2.carbon.identity.provisioning.connector.salesforce.SalesforceProvisioningConnectorFactory;
 
-/**
- * @scr.component name=
- * "org.wso2.carbon.identity.provisioning.salesforce.internal.SalesforceConnectorServiceComponent"
- * immediate="true"
- */
+@Component(
+        name = "org.wso2.carbon.identity.provisioning.salesforce.internal.SalesforceConnectorServiceComponent",
+        immediate = true
+)
 public class SalesforceConnectorServiceComponent {
 
     private static Log log = LogFactory.getLog(SalesforceConnectorServiceComponent.class);
 
+    @Activate
     protected void activate(ComponentContext context) {
 
         if (log.isDebugEnabled()) {
